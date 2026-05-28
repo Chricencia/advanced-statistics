@@ -56,3 +56,6 @@ rsconnect/
 *.dta
 *.sav
 
+# macOS Finder files
+.DS_Store
+
