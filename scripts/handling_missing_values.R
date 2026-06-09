@@ -1,6 +1,7 @@
 # import the dataset
 tb_data <- readr::read_csv("data/TB_dr_surveillance_2023-05-08.csv")
 
+# restarting this R code so i can record it for my tesfi audience
 # keep only countries in EUR region and subset of variables
 tb_data_clean <- tb_data |> 
   dplyr::filter(
@@ -21,9 +22,36 @@ tb_data_clean |>
 tb_data_clean |> 
   naniar::gg_miss_fct(
     fct = country
-  )
+)
+
 # this heat map can clearly visualize the missing values in our dataset
 # specifically from the variable country 
+
+# view the pattern of missingness
+tb_data_clean |> 
+  naniar::gg_miss_upset(order.by = "freq", nsets = 10)
+
+# redoing this part just for the show
+#use the mice() package to show the pattern of missingness
+mice::md.pattern(tb_data_clean, rotate.names = TRUE)
+
+#ignoring missing data
+# remove two variables with most observations missing
+# make a complete case version of the tb data
+tb_complete <- tb_data_clean |> 
+  dplyr::select(-c(r_rlt_rel,rr_rel)) |> 
+  tidyr::drop_na()
+
+
+naniar::as_shadow(tb_data_clean)
+
+# this is such an interesting part of missingness
+tb_shadow <- naniar::bind_shadow(tb_data_clean)
+
+tb_shadow |> 
+  dplyr::group_by(pulm_labconf_ret_NA) |> 
+  dplyr::select_at()
+
 
 
 
