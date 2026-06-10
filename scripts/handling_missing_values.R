@@ -68,6 +68,28 @@ tb_data_clean <- tb_data_clean |>
     is.na(pulm_labconf_ret)~ mean(pulm_labconf_ret, na.rm = TRUE),
     TRUE ~ pulm_labconf_ret))
 
+# Hot-deck imputation
+# we use the package VIM
+tb_data_clean <- tb_data_clean |> 
+  dplyr::mutate(
+    pulm_labconf_ret5 =pulm_labconf_ret
+  ) |> 
+  VIM::hotdeck(variable = "pulm_labconf_ret5",
+               domain_var = "country",
+               imp_var = FALSE)
+
+# Regression
+tb_clean_subset <- tb_data_clean |> 
+  dplyr::select(pulm_labconf_new, pulm_labconf_ret)
+
+tb_data_clean <- tb_data_clean |> 
+  dplyr::mutate(pulm_labconf_ret6 = complete(mice(
+    tb_clean_subset,
+    method = "norm.predict",
+    m = 1,
+    maxit = 1
+  ))$pulm_labconf_ret)
+
 
     
   
