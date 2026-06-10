@@ -50,9 +50,17 @@ tb_shadow <- naniar::bind_shadow(tb_data_clean)
 
 tb_shadow |> 
   dplyr::group_by(pulm_labconf_ret_NA) |> 
-  dplyr::select_at()
+  dplyr::summarise_at(.vars = "pulm_labconf_new",
+                      .funs = c("mean", "sd", "var", "min", "max"),
+                      na.rm = TRUE)
+# Imputing missing data
+# Part 1: Least value carried forward
+tb_data_clean <- tb_data_clean |> 
+  dplyr::arrange(country, year) |> 
+  dplyr::mutate(pulm_labconf_ret2 = pulm_labconf_ret) |> 
+  dplyr::group_by(country) |> 
+  tidyr::fill(pulm_labconf_ret2)
 
-
-
+# Part 2: 
 
 
