@@ -53,6 +53,7 @@ tb_shadow |>
   dplyr::summarise_at(.vars = "pulm_labconf_new",
                       .funs = c("mean", "sd", "var", "min", "max"),
                       na.rm = TRUE)
+
 # Imputing missing data
 # Part 1: Least value carried forward
 tb_data_clean <- tb_data_clean |> 
@@ -61,6 +62,14 @@ tb_data_clean <- tb_data_clean |>
   dplyr::group_by(country) |> 
   tidyr::fill(pulm_labconf_ret2)
 
-# Part 2: 
+# Part 2: Mean Value
+tb_data_clean <- tb_data_clean |> 
+  dplyr::mutate(pulm_labconf_ret3 = dplyr::case_when(
+    is.na(pulm_labconf_ret)~ mean(pulm_labconf_ret, na.rm = TRUE),
+    TRUE ~ pulm_labconf_ret))
+
+
+    
+  
 
 
