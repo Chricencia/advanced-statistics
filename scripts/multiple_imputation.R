@@ -85,6 +85,31 @@ stripplot(imp, chl~.imp, pch = 20, cex = 2)
 
 stripplot(imp)
 
+# Analysis phase in
+# if we want to build a multiple linear regression model to predict chl based on age, bmi and hyp
+fit <- with(imp, lm(chl ~ age + bmi + hyp))
+fit # class mira - multiply imputed repeated analyses
+
+# inspect the 2nd fitted model
+summary(fit$analyses[[2]])
+
+# pooling the estimates
+est1 <- pool(fit)
+est1
+
+# get more information about the estimates
+summary(est1, conf.int = TRUE)
+
+# we can run whole imputation in one workflow
+# using the pipes
+est2 <- nhanes_factor |> 
+  mice(seed = 123, print = FALSE) |> 
+  with(lm(chl ~age + bmi + hyp)) |> 
+  pool()
+
+summary(est2, conf.int = TRUE)
+
+
 
 
       

@@ -1,0 +1,191 @@
+---
+title: "Multiple Imputation"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+For this exercise, we will return to the extract of the Health Survey for England, 2011 Teaching Dataset that you downloaded in week 1.
+
+The dataset is an extract of the Health Survey for England, 2011 Teaching Dataset which has been modified for teaching. You can only access the dataset after signing an agreement form via the “Data Access Agreement” item on Learn in Week 1 – Missing data. You will then need to download the relevant R data after accepting the Data Access Agreement.
+
+You are supplied with the following variables:  
+
+Variable | Description |
+|-------:|:---------:|
+| pserial | ID | 
+| age | Age at last birthday (years) | 
+| sex | Sex |
+| economic | Economic Status (4 groups)  Applies to aged 16 and over. Derived variable. Derived from questions during the interview about activity status in the last 7 days, ability to start work and if been actively seeking work. | 
+| bmi | Body mass index (kg/m^2^) |
+| sysbp | Systolic blood pressure (mmHg) | 
+| ill | Acute illness in the last two weeks |
+| smoker | Cigarette Smoking Status - Never/ Ex-regular/ Exoccasional/ Current. Derived from questions during the interview |  
+
+The aim is to explore the relationship between acute illness in the last two weeks and BMI, adjusted for age and sex. This exercise follows on from the week 1 missing data exercise. Please try the week 1 exercise before starting this exercise.
+
+# Data preparation
+
+The following code loads the packages, imports the data and prepares the data for analysis. The code creates a categorical BMI variable from the continuous BMI values. By default, categorical variables are ordered in alphabetical order, however for presentation in tables and modelling, its often helpful to change the order. In the code below, the categorical BMI variable has been re-ordered so that 18-25 kg/m^2^ is first, and then the other categories are listed in ascending order (ordering the categories in this way means that 18-25 kg/m^2^ will be the reference category in the models).
+
+**Activity 1:** Check the other categorical variables, and re-order them if necessary.
+
+```{r load}
+# Load packages ---
+library(tidyverse)
+library(janitor)      # The tabyl function makes nice tables
+library(mice)
+library(miceadds)
+library(naniar)
+library(RColorBrewer) # Nice colour palettes for plots
+
+# Import data ---
+hse_data <- readRDS("data.rds") 
+
+# Review data ---
+
+
+# Prepare data ---
+# Set preferred levels for variable BMI
+bmi_lvls = c("18 - 25", "<18.5", "25 - 30", "30 - 35", "35 - 40", ">=40")
+
+# Categorise BMI and re-order categorical variables as required
+hse_data <- 
+  hse_data %>%
+  mutate(
+    bmi_cat = 
+      case_when(
+        bmi < 18.5             ~ "<18.5",
+        bmi >= 18.5 & bmi < 25 ~ "18 - 25",
+        bmi >= 25   & bmi < 30 ~ "25 - 30",
+        bmi >= 30   & bmi < 35 ~ "30 - 35",
+        bmi >= 35   & bmi < 40 ~ "35 - 40",
+        bmi >= 40              ~ ">=40"
+      ),
+    bmi_cat = factor(bmi_cat, levels = bmi_lvls),
+  )
+
+```
+
+
+# Complete case analysis
+
+First we will conduct a complete case analysis of the relationship between acute illness and BMI, adjusted for age and sex. 
+For the purpose of this exercise we will include BMI as a categorical variable. The relationship between BMI and health outcomes is often non-linear, with both very low and very high BMIs associated with poor outcomes. Whilst we could include BMI as a continuous variable in the analysis, and model a non-linear relationship with acute illness, multiple imputation for non-linear models is beyond the scope of this exercise. 
+
+**Activity 2:** Use logistic regression to evaluate the relationship between acute illness and categorical BMI, adjusted for age and sex. Assume that there is a linear relationship between age and acute illness. 
+
+```{r cc}
+
+```
+
+**Question 1:** How many individuals were included in the complete case analysis? 
+
+**Question 2:** Describe the relationship between BMI and acute illness?
+
+
+# Multiple imputation
+
+## Plan the multiple imputation
+In practice, the most time consuming part of a multiple imputation is the planning stage.
+You'll need to decide:
+
+1. Which variables to include in the imputation models 
+2. What imputation method to use for each variable with missing data
+3. How many imputations and cycles to run
+
+
+Let's work through each of these in turn
+
+### Which variables to include in the imputation model
+
+The imputation models should include all variables that are included in the analysis model, including the outcome, as well as any variables that are associated with the variables with missing data and any variables that are predictive of missingness.
+
+Hence, we must include the variables `ill`, `bmi_cat`, `age` and `sex` in our imputation model. The dataset also includes the variables `sysbp`, `economic` and `smoker`. We need to decide if it will be valuable to include any of these variables in our imputation model.
+
+**Activity 3:** Look back at your results from the week 1 exercise. Out of the variables included in the analysis model, which ones have missing data? Explore the data and decide if it will be valuable to include blood pressure, smoking and economic status in the imputation model. 
+
+```{r review_variables}
+
+```
+
+### What imputation method to use for each variable with missing data
+Once you've decided which variables to include in your imputation model, the next step 
+is to decide what imputation method to use for each of these variables. For binary variables, the default option of logistic regression is usually a good choice, and for categorical variables the default option of polytomous logistic regression (another name for multinomial logistic regression) is usually a good choice. For continuous variables, two of the most common methods are the default option of predictive mean matching (PMM) and linear regression. Linear regression is only appropriate for normally distributed variables. Predictive mean matching is a good option for variables that aren't normally distributed, however since it draws imputations from the observed data, it works best when the dataset is large, and there isn't too much missing data in the variables being imputed by this method.
+
+**Activity 4:** For any continuous variables with missing data in your imputation model, review the percentage of missing data and assess whether the variable follows a normal distribution. Decide what imputation method to use for each variable.
+
+```{r review_distributions}
+
+```
+
+### How many imputations and cycles to run
+
+The number of imputed datasets should be at least equal the percentage of incomplete data. Usually 10 cycles in sufficient, but you should always check this after you've run your multiple imputation by viewing the convergence plots. 
+
+**Activity 5:** Considering the variables in your imputation model, how many individuals have missing data in at least one of these variables? Use this information to decide how many imputations to run.
+
+```{r review_completeness}
+
+```
+
+## Run the multiple imputation
+
+Once you've carefully planned your multiple imputation, you're ready to run the imputation step. Remember that this step can take a while to run depending on the size of your dataset, the amount of missing data, and the number of imputations and cycles that you choose to run.
+
+**Activity 6:** Run the imputation step
+
+```{r run_mi, cache = TRUE}
+
+# Note that the chunk option cache is set to TRUE.
+# This is a good option for code (such as multiple imputation) that may take
+# a long time to run. You can read more about how this works here:
+# https://bookdown.org/yihui/rmarkdown-cookbook/cache.html
+
+```
+
+## Check the multiple imputation
+
+**Activity 7:** Check the imputation step. You should view the convergence
+plots, and compare the distribution of the imputed data to the distribution of 
+the observed data. Hint: the `stripplot` function from the Week 2 notes, is 
+useful for evaluating continuous variables in small datasets. For large
+datasets, `bwplot` and `densityplot` are good options for evaluating continuous
+variables. To evaluate the categorical variables you could tabulate the observed
+values and the imputed values and compare the distributions.
+
+```{r check_mi}
+
+```
+## Analyse the imputed datasets
+
+**Activity 8:** Review the outcome variable. Does it have any missing values?
+
+```{r review_ill}
+
+```
+Whilst there are some exceptions, the best approach is usually to exclude
+individuals with missing outcomes from the analysis. You can exclude
+individuals with missing outcomes by applying the `filter` command to your
+multiply imputed dataset.
+
+**Activity 9:** Fit the logistic regression to each of the imputed datasets. 
+
+```{r analyse_mi}
+
+```
+
+## Pool the results
+
+The final analysis step is to pool the results of the analyses. 
+
+**Activity 10:** Pool the results of the analyses and calculate confidence intervals
+for each of the coefficients in your model. Compare the results of your complete
+case analysis to the results of your multiple imputation.
+
+```{r pool_mi}
+
+```
