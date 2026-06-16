@@ -91,6 +91,7 @@ tb_data_clean <- tb_data_clean |>
   ))$pulm_labconf_ret)
 
 
+
     
   
 
